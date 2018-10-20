@@ -1,0 +1,6 @@
+﻿  Game.cpp
+c:\users\ben\documents\visual studio 2015\projects\hangman\hangman\game.cpp(164): warning C4244: 'argument': conversion from 'time_t' to 'unsigned int', possible loss of data
+c:\users\ben\documents\visual studio 2015\projects\hangman\hangman\game.cpp(242): warning C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  c:\program files (x86)\windows kits\10\include\10.0.10240.0\ucrt\string.h(119): note: see declaration of 'strcpy'
+  Hangman.vcxproj -> C:\Users\Ben\Documents\Visual Studio 2015\Projects\Hangman\Debug\Hangman.exe
+  Hangman.vcxproj -> C:\Users\Ben\Documents\Visual Studio 2015\Projects\Hangman\Debug\Hangman.pdb (Full PDB)

@@ -1,0 +1,15 @@
+toronto
+london
+beijing
+chicago
+paris
+tokyo
+barcelona
+berlin
+sydney
+singapore
+philadelphia
+bangkok
+istanbul
+alexandria
+casablanca
