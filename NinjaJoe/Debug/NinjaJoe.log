@@ -1,0 +1,9 @@
+﻿  Bkg.cpp
+c:\users\benbe\documents\visual studio 2015\projects\ninjajoe\ninjajoe\bkg.cpp(8): warning C4244: '=': conversion from 'int' to 'float', possible loss of data
+c:\users\benbe\documents\visual studio 2015\projects\ninjajoe\ninjajoe\bkg.cpp(9): warning C4244: '=': conversion from 'int' to 'float', possible loss of data
+c:\users\benbe\documents\visual studio 2015\projects\ninjajoe\ninjajoe\bkg.cpp(81): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+c:\users\benbe\documents\visual studio 2015\projects\ninjajoe\ninjajoe\bkg.cpp(82): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+c:\users\benbe\documents\visual studio 2015\projects\ninjajoe\ninjajoe\bkg.cpp(128): warning C4244: 'argument': conversion from 'float' to 'int', possible loss of data
+c:\users\benbe\documents\visual studio 2015\projects\ninjajoe\ninjajoe\bkg.cpp(129): warning C4244: 'argument': conversion from 'float' to 'int', possible loss of data
+c:\users\benbe\documents\visual studio 2015\projects\ninjajoe\ninjajoe\bkg.cpp(134): warning C4244: 'argument': conversion from 'float' to 'int', possible loss of data
+c:\users\benbe\documents\visual studio 2015\projects\ninjajoe\ninjajoe\bkg.cpp(135): warning C4244: 'argument': conversion from 'float' to 'int', possible loss of data
