@@ -1,0 +1,20 @@
+﻿  GameObject.cpp
+  Main.cpp
+  Material.cpp
+  Mesh.cpp
+  Particle.cpp
+Particle.cpp(10): warning C4244: 'argument': conversion from 'time_t' to 'unsigned int', possible loss of data
+Particle.cpp(29): warning C4305: '+=': truncation from 'double' to 'float'
+Particle.cpp(61): warning C4244: '=': conversion from 'int' to 'float', possible loss of data
+  ParticleRenderer.cpp
+ParticleRenderer.cpp(54): warning C4018: '<': signed/unsigned mismatch
+ParticleRenderer.cpp(56): warning C4244: 'argument': conversion from 'time_t' to 'unsigned int', possible loss of data
+ParticleRenderer.cpp(82): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+  Player.cpp
+  Scene.cpp
+  glew.c
+  Generating code
+  All 883 functions were compiled because no usable IPDB/IOBJ from previous compilation was found.
+  Finished generating code
+  PGG_FlyingTeapot.vcxproj -> C:\Users\benbe\Documents\Visual Studio 2015\Projects\PGG_Lab17_v2\Release\PGG_FlyingTeapot.exe
+  PGG_FlyingTeapot.vcxproj -> C:\Users\benbe\Documents\Visual Studio 2015\Projects\PGG_Lab17_v2\Release\PGG_FlyingTeapot.pdb (Full PDB)

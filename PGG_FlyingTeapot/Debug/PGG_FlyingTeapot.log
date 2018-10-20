@@ -1,0 +1,15 @@
+﻿  ParticleRenderer.cpp
+c:\users\benbe\documents\visual studio 2015\projects\pgg_lab17_v2\pgg_flyingteapot\particlerenderer.cpp(54): warning C4018: '<': signed/unsigned mismatch
+c:\users\benbe\documents\visual studio 2015\projects\pgg_lab17_v2\pgg_flyingteapot\particlerenderer.cpp(56): warning C4244: 'argument': conversion from 'time_t' to 'unsigned int', possible loss of data
+c:\users\benbe\documents\visual studio 2015\projects\pgg_lab17_v2\pgg_flyingteapot\particlerenderer.cpp(82): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+  Particle.cpp
+c:\users\benbe\documents\visual studio 2015\projects\pgg_lab17_v2\pgg_flyingteapot\particle.cpp(10): warning C4244: 'argument': conversion from 'time_t' to 'unsigned int', possible loss of data
+c:\users\benbe\documents\visual studio 2015\projects\pgg_lab17_v2\pgg_flyingteapot\particle.cpp(29): warning C4305: '+=': truncation from 'double' to 'float'
+c:\users\benbe\documents\visual studio 2015\projects\pgg_lab17_v2\pgg_flyingteapot\particle.cpp(61): warning C4244: '=': conversion from 'int' to 'float', possible loss of data
+  Generating Code...
+  Compiling...
+  Scene.cpp
+  Main.cpp
+  Generating Code...
+  PGG_FlyingTeapot.vcxproj -> C:\Users\benbe\Documents\Visual Studio 2015\Projects\PGG_Lab17_v2\Debug\PGG_FlyingTeapot.exe
+  PGG_FlyingTeapot.vcxproj -> C:\Users\benbe\Documents\Visual Studio 2015\Projects\PGG_Lab17_v2\Debug\PGG_FlyingTeapot.pdb (Full PDB)
