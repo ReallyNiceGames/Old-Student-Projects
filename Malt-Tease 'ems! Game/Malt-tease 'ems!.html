@@ -1,0 +1,845 @@
+<!doctype html> 
+<html lang="en"> 
+<head> 
+	<meta charset="UTF-8" />
+	<title>Malt-tease 'ems!</title>
+	<script type="text/javascript" src="js/phaser.min.js"></script>
+	
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, minimal-ui" />
+	 <meta name="apple-mobile-web-app-capable" content="yes" />
+	 <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+	 <meta name="HandheldFriendly" content="true" />		
+	 <meta name="mobile-web-app-capable" content="yes" />
+		 
+		 
+    <style type="text/css">
+        body {
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+
+
+<script type="text/javascript">
+
+	// Start a new instance of a Phaser.Game
+	var game = new Phaser.Game(1920, 980, Phaser.AUTO);
+	
+	// Creates a state for preloading assets
+	var preloadAssets = function(game) {}
+	
+	preloadAssets.prototype = {
+	
+		preload: function() 
+		{
+		
+			// preloading all of the assets
+			game.load.image('startScreen', 'assets/startScreen.png');
+			game.load.image('instructionsScreen', 'assets/instructionsScreen.png');
+			this.load.image('malteser', 'assets/malteserItem.png');
+			this.load.image('handP1', 'assets/handP1.png');
+			this.load.image('handP2', 'assets/handP2.png');
+			this.load.tilemap('maze', 'assets/malteserMaze.json', null, Phaser.Tilemap.TILED_JSON);
+			this.load.image('tiles', 'assets/malteserTileset.png');
+			this.load.image('backgroundTiles', 'assets/backgroundMapTileset.png');
+			this.load.image('bunny', 'assets/bunnyItem.png');
+			this.load.image('cup', 'assets/cupItem.png');
+			this.load.image('turbo', 'assets/turboBuff.png');
+			
+		},
+			
+		create: function() 
+		{
+			// Start the splash screen state
+			game.state.start("SplashScreen");
+		}
+		
+	}
+	
+	// Creates a state for the splash screen
+	var titleScreen = function(game) {}
+	
+	titleScreen.prototype = {
+	
+		create: function() {
+		
+			// organise the layout onscreen
+			game.scale.pageAlignHorizontally = true;
+			game.scale.pageAlignVertically = true;
+			
+			// scale the game as large as possible whilst maintaining aspect ratio
+			game.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
+			
+			// prevent the game from stopping when the page loses focus
+			game.stage.disableVisibilityChange = true;
+			
+			// sets a default background colour and creates the start screen
+			game.stage.backgroundColor = '#787878';
+			game.add.sprite(0, 0, 'startScreen');
+			
+			// adds some style to the onscreen text
+			var style = {
+			
+				font: "90px Haettenschweiler",
+				fill: "orange",
+				align: "left"
+				
+			};
+			
+			// places the text on the screen at a specific location
+			var text = game.add.text(750, game.height /1.3, "Click To Begin!", style);
+			
+			// enables the user to click on the screen to go to the next state			
+			game.input.onDown.add(this.startInstructions, this);
+			
+		},
+		
+		// this is called when the user clicks the screen
+		startInstructions: function() 
+		{
+			// starts the instructions screen state
+			game.state.start('instructionsScreen');
+			
+		}
+	}
+	
+	// creates a state for the instructions screen
+	var instructionsScreen = function(game) {}
+	
+	instructionsScreen.prototype = {
+	
+		create: function() {
+		
+			// organises the layout onscreen
+			game.scale.pageAlignHorizontally = true;
+			game.scale.pageAlignVertically = true;
+			
+			// scale the game as large as possible whilst maintaining aspect ratio
+			game.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
+			
+			// prevent the game from stopping when the page loses focus
+			game.stage.disableVisibilityChange = true;
+			
+			// creates a default colour for the background and creates the instructions screen
+			game.stage.backgroundColor = '#787878';
+			game.add.sprite(0, 0, 'instructionsScreen');
+
+			// enables the user to click on the screen to begin the next state			
+			game.input.onDown.add(this.startGame, this);
+			
+		},
+		
+		// this is called when the user clicks the screen
+		startGame: function() 
+		{
+			
+			// starts the game state
+			game.state.start('Game');
+			
+		}
+	}			
+			
+	// creates a state for the main game
+	var MalteserGame = function (game) {
+	
+		// creates a bunch of variables to be used later in the game
+		this.map = null;
+		this.layer = null;
+		this.handP1 = null;
+		this.handP2 = null;
+		this.background = null;
+		
+		this.safetile = 1;
+		this.gridsize = 32;
+		
+		this.speedP1 = 200;
+		this.speedP2 = 200;
+		
+		this.threshold = 3;
+		this.turnSpeed = 150;
+		
+		this.scoreP1 = 0;
+		this.scoreP2 = 0;
+		
+		// creates some new instances of Phaser.Point
+		this.markerP1 = new Phaser.Point();
+		this.turnPointP1 = new Phaser.Point();
+		
+		this.markerP2 = new Phaser.Point();
+		this.turnPointP2 = new Phaser.Point();
+		
+		// creates some arrays/lists to manage the directions of the players
+		this.directionsP1 = [ null, null, null, null, null ];
+		this.directionsP2 = [ null, null, null, null, null ];
+		this.oppositesP1 = [ Phaser.NONE, Phaser.RIGHT, Phaser.LEFT, Phaser.DOWN, Phaser.UP ];
+		this.oppositesP2 = [ Phaser.NONE, Phaser.RIGHT, Phaser.LEFT, Phaser.DOWN, Phaser.UP ];
+		
+		// more variables for turning and current direction
+		this.currentP1 = Phaser.UP;
+		this.turningP1 = Phaser.NONE;
+		
+		this.currentP2 = Phaser.UP;
+		this.turningP2 = Phaser.NONE;
+		
+	};
+
+	MalteserGame.prototype = {
+	
+		init: function () {
+		
+			// scales the game screen to fit at different resolutions
+			this.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
+			this.scale.pageAlignHorizontally = true;
+			this.scale.pageAlignVertically = true;
+			
+			Phaser.Canvas.setImageRenderingCrisp(this.game.canvas);
+			
+			// enable physics
+			this.physics.startSystem(Phaser.Physics.ARCADE);
+			
+		},
+		
+		preload: function () {
+	
+		},
+		
+		create: function () {
+		
+			// creates a default background colour
+			this.stage.backgroundColor = '#787878';
+			
+			// creates the tilemap and along with its tilesets
+			this.map = this.add.tilemap('maze');
+			this.map.addTilesetImage('game tileset', 'tiles');
+			this.map.addTilesetImage('backgroundMapTileset', 'backgroundTiles');
+			
+			// creates a layer to place everything on
+			this.layer = this.map.createLayer('Tile Layer 1');
+			
+			// creates a group for the maltesers and gives them a body for collision
+			this.malteserGroup = this.add.group();
+			this.malteserGroup.enableBody = true;
+
+			// creates a group for the bunnies and gives them a body for collision
+			this.bunnyGroup = this.add.group();
+			this.bunnyGroup.enableBody = true;
+			
+			// creates a group for the cups of hot chocolate and gives them a body for collision
+			this.cupGroup = this.add.group();
+			this.cupGroup.enableBody = true;
+			
+			// creates the image to use for the "turbo" buff for player one
+			this.turboP1 = this.add.sprite(220, 360, 'turbo');
+			this.turboP1.scale.setTo(0.7, 0.7);
+			this.turboP1.kill();
+			
+			// creates the image to use for the "turbo" buff for player two
+			this.turboP2 = this.add.sprite(1445, 360, 'turbo');
+			this.turboP2.scale.setTo(0.7, 0.7);
+			this.turboP2.kill();
+			
+			// sets a timer to call the function for creating maltesers every second
+			this.time.events.repeat(Phaser.Timer.SECOND, 100000, this.spawnMalteser, this);
+			
+			// sets collision to EVERY tile excluding the one safe tile
+			this.map.setCollisionByExclusion([this.safetile], true, this.layer);
+			
+			// sets the origin of the layer to the top-left corner and unfixes the view to the layer
+			this.layer.x = 0;
+			this.layer.y = 0;
+			this.layer.fixedToCamera = false;
+			
+			// creates player one
+			this.handP1 = this.add.sprite(687, 208, 'handP1');
+			this.handP1.anchor.set(0.5);
+			
+			// creates player two
+			this.handP2 = this.add.sprite(1231, 752, 'handP2');
+			this.handP2.anchor.set(0.5);
+			
+			// adds physics to both players
+			this.physics.arcade.enable(this.handP1);			
+			this.physics.arcade.enable(this.handP2);
+
+			// adds the score display for player one
+			this.scoreTextP1 = game.add.text(150, 170, 'Player One\nScore: 0', {
+			
+				font: '65px Algerian', 
+				fill: '#0A53CA', 
+				align: 'center'
+				
+			});
+			
+			// adds the score display for player two
+			this.scoreTextP2 = game.add.text(1370, 170, 'Player Two\nScore: 0', {
+			
+				font: '65px Algerian', 
+				fill: 'Lime', 
+				align: 'center'
+				
+			});
+			
+			// adds the goal/winner text at the top of the screen
+			this.infoText = game.add.text(game.world.centerX, 90, 'First player to reach 500 score wins!', {
+			
+				font: '45px Algerian', 
+				fill: 'Orange', 
+				align: 'center'
+				
+			});
+			
+			this.infoText.anchor.setTo(0.5, 0.5);
+			
+			// enables the usage of cursor keys and some keyboard letters
+			this.cursors = this.input.keyboard.createCursorKeys();
+			this.W = this.input.keyboard.addKey(Phaser.Keyboard.W);
+			this.A = this.input.keyboard.addKey(Phaser.Keyboard.A);
+			this.S = this.input.keyboard.addKey(Phaser.Keyboard.S);
+			this.D = this.input.keyboard.addKey(Phaser.Keyboard.D);
+			
+			// sets the default movement of player one and player two
+			this.moveP1(Phaser.RIGHT);
+			this.moveP2(Phaser.LEFT);
+			
+		},
+		
+		// checks for key inputs on player one
+		checkKeysP1: function () {
+		
+			// checks to see what movement key has been pressed for player one 
+			// and then checks the current direction the player is facing
+			if (this.input.keyboard.isDown(Phaser.Keyboard.W) && this.currentP1 !== Phaser.UP)
+			{
+				this.checkDirectionP1(Phaser.UP)
+            }
+			else if (this.input.keyboard.isDown(Phaser.Keyboard.A) && this.currentP1 !== Phaser.LEFT)
+			{
+				this.checkDirectionP1(Phaser.LEFT)
+            }
+			else if (this.input.keyboard.isDown(Phaser.Keyboard.S) && this.currentP1 !== Phaser.DOWN)
+			{
+				this.checkDirectionP1(Phaser.DOWN)
+            }
+			else if (this.input.keyboard.isDown(Phaser.Keyboard.D) && this.currentP1 !== Phaser.RIGHT)
+			{
+				this.checkDirectionP1(Phaser.RIGHT)
+            }
+            else
+            {
+                //  This forces the player to hold the key down to turn the corner
+                this.turningP1 = Phaser.NONE;
+            }
+		
+		},
+		
+		// checks for key inputs on player two
+		checkKeysP2: function () {
+		
+			// checks to see what movement key has been pressed for player two 
+			// and then checks the current direction the player is facing
+			if (this.cursors.left.isDown && this.currentP2 !== Phaser.LEFT)
+            {
+                this.checkDirectionP2(Phaser.LEFT);
+            }
+            else if (this.cursors.right.isDown && this.currentP2 !== Phaser.RIGHT)
+            {
+                this.checkDirectionP2(Phaser.RIGHT);
+            }
+            else if (this.cursors.up.isDown && this.currentP2 !== Phaser.UP)
+            {
+                this.checkDirectionP2(Phaser.UP);
+            }
+            else if (this.cursors.down.isDown && this.currentP2 !== Phaser.DOWN)
+            {
+                this.checkDirectionP2(Phaser.DOWN);
+            }
+            else
+            {
+                //  This forces the player to hold the key down to turn the corner
+                this.turningP2 = Phaser.NONE;
+            }
+		
+		},
+		
+		// checks the current direction of player one
+		checkDirectionP1: function (turnTo) {
+		
+			// returns a value to the game to tell it what direct player one is facing
+			if (this.turningP1 === turnTo || this.directionsP1[turnTo] === null || this.directionsP1[turnTo].index !== this.safetile)
+            {
+                //  Invalid direction if player one is already set to turn that way
+                //  Or there is no tile there, or the tile isn't index a floor tile
+                return;
+            }
+
+            //  Check if player one wants to turn around and can
+            if (this.currentP1 === this.oppositesP1[turnTo])
+            {
+                this.moveP1(turnTo);
+            }
+            else
+            {
+                this.turningP1 = turnTo;
+
+                this.turnPointP1.x = (this.markerP1.x * this.gridsize) + (this.gridsize / 2);
+                this.turnPointP1.y = (this.markerP1.y * this.gridsize) + (this.gridsize / 2);
+            }
+			
+		},
+		
+		// checks the current direction of player two
+		checkDirectionP2: function (turnTo) {
+		
+			// returns a value to the game to tell it what direct player two is facing
+			if (this.turningP2 === turnTo || this.directionsP2[turnTo] === null || this.directionsP2[turnTo].index !== this.safetile)
+            {
+                //  Invalid direction if player two is already set to turn that way
+                //  Or there is no tile there, or the tile isn't index a floor tile
+                return;
+            }
+
+            //  Check if player two wants to turn around and can
+            if (this.currentP2 === this.oppositesP2[turnTo])
+            {
+                this.moveP2(turnTo);
+            }
+            else
+            {
+                this.turningP2 = turnTo;
+
+                this.turnPointP2.x = (this.markerP2.x * this.gridsize) + (this.gridsize / 2);
+                this.turnPointP2.y = (this.markerP2.y * this.gridsize) + (this.gridsize / 2);
+            }
+			
+		},
+		
+		// enables player one to turn around corners
+		turnP1: function () {
+
+			// creates variables for using mathematics with the coordinates of player one
+            var cx = Math.floor(this.handP1.x);
+            var cy = Math.floor(this.handP1.y);
+
+            //  Turning needs a threshold, because at high speeds you can't turn because the coordinates skip past
+            if (!this.math.fuzzyEqual(cx, this.turnPointP1.x, this.threshold) || !this.math.fuzzyEqual(cy, this.turnPointP1.y, this.threshold))
+            {
+                return false;
+            }
+
+			// changes the coordinates of player one to the turning point
+            this.handP1.x = this.turnPointP1.x;
+            this.handP1.y = this.turnPointP1.y;
+
+			// resets the body of player one to the turning point
+            this.handP1.body.reset(this.turnPointP1.x, this.turnPointP1.y);
+
+			// sends the value of turningP1 to the moveP1 function and calls it
+            this.moveP1(this.turningP1);
+
+			// resets turning to none
+            this.turningP1 = Phaser.NONE;
+
+            return true;
+
+        },
+		
+		// enables player two to turn around corners
+		turnP2: function () {
+
+			// creates variables for using mathematics with the coordinates of player two
+            var cx = Math.floor(this.handP2.x);
+            var cy = Math.floor(this.handP2.y);
+
+            //  Turning needs a threshold, because at high speeds you can't turn because the coordinates skip past
+            if (!this.math.fuzzyEqual(cx, this.turnPointP2.x, this.threshold) || !this.math.fuzzyEqual(cy, this.turnPointP2.y, this.threshold))
+            {
+                return false;
+            }
+
+			// changes the coordinates of player two to the turning point
+            this.handP2.x = this.turnPointP2.x;
+            this.handP2.y = this.turnPointP2.y;
+
+			// resets the body of player two to the turning point
+            this.handP2.body.reset(this.turnPointP2.x, this.turnPointP2.y);
+
+			// sends the value of turningP2 to the moveP2 function and calls it
+            this.moveP2(this.turningP2);
+
+			// resets turning to none
+            this.turningP2 = Phaser.NONE;
+
+            return true;
+
+        },
+		
+		// allows player one to move
+		moveP1: function (directionP1) {
+
+			// creates a local variable to store the speed of player one
+            var speed = this.speedP1;
+
+			// changes the movement direction of player one when a direction is input
+            if (directionP1 === Phaser.LEFT || directionP1 === Phaser.UP)
+            {
+                speed = -speed;
+            }
+
+			// changes the movement direction of player one when a direction is input
+            if (directionP1 === Phaser.LEFT || directionP1 === Phaser.RIGHT)
+            {
+                this.handP1.body.velocity.x = speed;
+            }
+            else
+            {
+                this.handP1.body.velocity.y = speed;
+            }
+			
+			// default scale and angle of player one
+			this.handP1.scale.x = 1;
+			this.handP1.angle = 0;
+
+			// changes player one visually so that the hand turns when moving around a corner
+			if (directionP1 === Phaser.LEFT)
+			{
+				this.handP1.scale.x = -1;
+			}
+			else if (directionP1 === Phaser.UP)
+			{
+				this.handP1.angle = 270;
+			}
+			else if (directionP1 === Phaser.DOWN)
+			{
+				this.handP1.angle = 90;
+			}
+
+            this.currentP1 = directionP1;
+
+        },
+		
+		// allows player two to move
+		moveP2: function (directionP2) {
+
+			// creates a local variable to store the speed of player one
+            var speed = this.speedP2;
+
+			// changes the movement direction of player one when a direction is input
+            if (directionP2 === Phaser.LEFT || directionP2 === Phaser.UP)
+            {
+                speed = -speed;
+            }
+
+			// changes the movement direction of player one when a direction is input
+            if (directionP2 === Phaser.LEFT || directionP2 === Phaser.RIGHT)
+            {
+                this.handP2.body.velocity.x = speed;
+            }
+            else
+            {
+                this.handP2.body.velocity.y = speed;
+            }
+			
+			// default scale and angle of player two
+			this.handP2.scale.x = 1;
+			this.handP2.angle = 0;
+
+			// changes player one visually so that the hand turns when moving around a corner
+			if (directionP2 === Phaser.RIGHT)
+			{
+				this.handP2.scale.x = -1;
+			}
+			else if (directionP2 === Phaser.UP)
+			{
+				this.handP2.angle = 90;
+			}
+			else if (directionP2 === Phaser.DOWN)
+			{
+				this.handP2.angle = 270;
+			}
+
+            this.currentP2 = directionP2;
+
+        },
+		
+		// creates maltesers and other items and then spawns them around the maze
+		spawnMalteser: function () {
+		
+			// creates a random number generator between 1 to 14
+			var random = game.rnd.integerInRange(1, 14);
+		
+			// creates items randomly based on the number generator
+			// and the current number of items in the game already
+			if (random === 1 && this.malteserGroup.total <= 2)
+			{
+				this.malt = this.malteserGroup.create(800, 320, 'malteser');
+			}
+			else if (random === 2 && this.malteserGroup.total <= 2)
+			{
+				this.malt = this.malteserGroup.create(1088, 320, 'malteser')
+			}
+			else if (random === 3 && this.malteserGroup.total <= 2)
+			{
+				this.malt = this.malteserGroup.create(1088, 608, 'malteser');
+			}
+			else if (random === 4 && this.malteserGroup.total <= 2)
+			{
+				this.malt = this.malteserGroup.create(800, 608, 'malteser');
+			}
+			else if (random === 5 && this.malteserGroup.total <= 2)
+			{
+				this.malt = this.malteserGroup.create(1184, 384, 'malteser');
+			}
+			else if (random === 6 && this.malteserGroup.total <= 2)
+			{
+				this.malt = this.malteserGroup.create(704, 544, 'malteser');
+			}
+			else if (random === 7 && this.malteserGroup.total <= 2)
+			{
+				this.malt = this.malteserGroup.create(928, 512, 'malteser');
+			}
+			else if (random === 8 && this.malteserGroup.total <= 2)
+			{
+				this.malt = this.malteserGroup.create(960, 416, 'malteser');
+			}
+			else if (random === 9 && this.malteserGroup.total <= 2)
+			{
+				this.malt = this.malteserGroup.create(672, 736, 'malteser');
+			}
+			else if (random === 10 && this.malteserGroup.total <= 2)
+			{
+				this.malt = this.malteserGroup.create(1216, 192, 'malteser');
+			}
+			else if (random === 11 && this.bunnyGroup.total === 0 && this.malteserGroup.total <= 2 && this.cupGroup.total === 0)
+			{
+				this.bunny = this.bunnyGroup.create(1152, 257, 'bunny');
+			}
+			else if (random === 12 && this.bunnyGroup.total === 0 && this.malteserGroup.total <= 2 && this.cupGroup.total === 0)
+			{
+				this.bunny = this.bunnyGroup.create(736, 673, 'bunny');
+			}
+			else if (random === 13 && this.bunnyGroup.total === 0 && this.malteserGroup.total <= 2 && this.cupGroup.total === 0)
+			{
+				this.cup = this.cupGroup.create(928, 225, 'cup');
+			}
+			else if (random === 14 && this.bunnyGroup.total === 0 && this.malteserGroup.total <= 2 && this.cupGroup.total === 0)
+			{
+				this.cup = this.cupGroup.create(960, 705, 'cup');
+			}
+
+		},
+		
+		// allows for the collection of maltesers for player one
+		collectMalteserP1: function (handP1, malt) {
+		
+			malt.kill();
+			malt.destroy();
+			
+			// adds to the score
+			this.scoreP1 += 10;
+			this.scoreTextP1.text = 'Player One\nScore: ' + this.scoreP1;
+			
+			// checks to see if there's a winner
+			if (this.scoreP1 >= 500 && this.scoreP2 < 500)
+			{
+				this.infoText.text = "The winner is Player One!";
+			}
+		
+		},
+
+		// allows for the collection of maltesers for player two
+		collectMalteserP2: function (handP2, malt) {
+		
+			malt.kill();
+			malt.destroy();
+			
+			// adds to the score
+			this.scoreP2 += 10;
+			this.scoreTextP2.text = 'Player Two\nScore: ' + this.scoreP2;
+			
+			// checks to see if there's a winner
+			if (this.scoreP2 >= 500 && this.scoreP1 < 500)
+			{
+				this.infoText.text = "The winner is Player Two!";
+			}
+		
+		},
+		
+		// allows for the collection of bunnies for player one
+		collectBunnyP1: function (handP1, bunny) {
+		
+			bunny.kill();
+			bunny.destroy();
+			
+			// adds to the score
+			this.scoreP1 += 50;
+			this.scoreTextP1.text = 'Player One\nScore: ' + this.scoreP1;
+			
+			// checks to see if there's a winner
+			if (this.scoreP1 >= 500 && this.scoreP2 < 500)
+			{
+				this.infoText.text = "The winner is Player One!";
+			}
+		
+		},
+
+		// allows for the collection of bunnies for player two
+		collectBunnyP2: function (handP2, bunny) {
+		
+			bunny.kill();
+			bunny.destroy();
+			
+			// adds to the score
+			this.scoreP2 += 50;
+			this.scoreTextP2.text = 'Player Two\nScore: ' + this.scoreP2;
+			
+			// checks to see if there's a winner
+			if (this.scoreP2 >= 500 && this.scoreP1 < 500)
+			{
+				this.infoText.text = "The winner is Player Two!";
+			}
+		
+		},
+		
+		// allows for the collection of cups for player one
+		collectCupP1: function (handP1, cup) {
+		
+			cup.kill();
+			cup.destroy();
+		
+			// increases the speed of player one
+			this.speedP1 = 300;
+			
+			// activates the turbo visual below the score
+			this.turboP1.revive();
+			
+			// creates the timer for the buff
+			timerP1 = game.time.create();
+			
+			// sets the timer and sets it to call a function when it ends
+			timerEventP1 = timerP1.add(Phaser.Timer.SECOND * 10, this.endBuffP1, this);
+			
+			// begins the timer
+			timerP1.start()	
+			
+		},
+		
+		// removes the buff from player one
+		endBuffP1: function () {
+		
+			timerP1.stop();
+			timerP1.destroy();
+			
+			// back to regular speed
+			this.speedP1 = 200;
+			
+			// hides the turbo visual
+			this.turboP1.kill();
+			
+		},
+		
+		// allows for the collection of cups for player two
+		collectCupP2: function (handP2, cup) {
+		
+			cup.kill();
+			cup.destroy();
+		
+			// increases the speed of player two
+			this.speedP2 = 300;
+			
+			// activates the turbo visual below the score
+			this.turboP2.revive();
+			
+			// creates the timer for the buff
+			timerP2 = game.time.create();
+			
+			// sets the timer and sets it to call a function when it ends
+			timerEventP2 = timerP2.add(Phaser.Timer.SECOND * 10, this.endBuffP2, this);
+			
+			// begins the timer
+			timerP2.start()	
+			
+		},
+		
+		// removes the buff from player two
+		endBuffP2: function () {
+		
+			timerP2.stop();
+			timerP2.destroy();
+			
+			// back to regular speed
+			this.speedP2 = 200;
+			
+			// hides the turbo visual
+			this.turboP2.kill();
+			
+		},
+		
+        update: function () {
+          
+			// detects any collision between the layer and the players
+            this.physics.arcade.collide(this.handP1, this.layer);
+			this.physics.arcade.collide(this.handP2, this.layer);
+			
+			// detects when either of the players have picked up a malteser
+			this.physics.arcade.overlap(this.handP1, this.malteserGroup, this.collectMalteserP1, null, this);
+			this.physics.arcade.overlap(this.handP2, this.malteserGroup, this.collectMalteserP2, null, this);
+			
+			// detects when either of the players have picked up a bunny
+			this.physics.arcade.overlap(this.handP1, this.bunnyGroup, this.collectBunnyP1, null, this);
+			this.physics.arcade.overlap(this.handP2, this.bunnyGroup, this.collectBunnyP2, null, this);
+			
+			// detects when either of the players have picked up a cup
+			this.physics.arcade.overlap(this.handP1, this.cupGroup, this.collectCupP1, null, this);
+			this.physics.arcade.overlap(this.handP2, this.cupGroup, this.collectCupP2, null, this);
+			
+			// keeps player one attached to the grid
+            this.markerP1.x = this.math.snapToFloor(Math.floor(this.handP1.x), this.gridsize) / this.gridsize;
+            this.markerP1.y = this.math.snapToFloor(Math.floor(this.handP1.y), this.gridsize) / this.gridsize;
+
+			// keeps player two attached to the grid
+			this.markerP2.x = this.math.snapToFloor(Math.floor(this.handP2.x), this.gridsize) / this.gridsize;
+            this.markerP2.y = this.math.snapToFloor(Math.floor(this.handP2.y), this.gridsize) / this.gridsize;
+			
+            //  Update the grid sensors
+            this.directionsP1[1] = this.map.getTileLeft(this.layer.index, this.markerP1.x, this.markerP1.y);
+            this.directionsP1[2] = this.map.getTileRight(this.layer.index, this.markerP1.x, this.markerP1.y);
+            this.directionsP1[3] = this.map.getTileAbove(this.layer.index, this.markerP1.x, this.markerP1.y);
+            this.directionsP1[4] = this.map.getTileBelow(this.layer.index, this.markerP1.x, this.markerP1.y);
+
+			this.directionsP2[1] = this.map.getTileLeft(this.layer.index, this.markerP2.x, this.markerP2.y);
+            this.directionsP2[2] = this.map.getTileRight(this.layer.index, this.markerP2.x, this.markerP2.y);
+            this.directionsP2[3] = this.map.getTileAbove(this.layer.index, this.markerP2.x, this.markerP2.y);
+            this.directionsP2[4] = this.map.getTileBelow(this.layer.index, this.markerP2.x, this.markerP2.y);
+			
+			// checks to see if any buttons are being pressed
+            this.checkKeysP1();
+            this.checkKeysP2();
+
+			// checks to see if any turning is happening
+            if (this.turningP1 !== Phaser.NONE)
+            {
+                this.turnP1();
+            }
+			
+			if (this.turningP2 !== Phaser.NONE)
+            {
+                this.turnP2();
+            }
+
+        },
+		
+	};
+	
+	// adds all of the game states and begins with preloading the assets
+	game.state.add('PreloadAssets', preloadAssets, true);
+	game.state.add('SplashScreen', titleScreen, true);
+	game.state.add('instructionsScreen', instructionsScreen, true);
+	game.state.add('Game', MalteserGame, true);
+	
+	game.state.start('PreloadAssets');
+
+</script>
+
+</body>
+</html>
